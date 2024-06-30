@@ -3,7 +3,7 @@ import numpy as np
 import os         
 import matplotlib.pyplot as plt             
 import cv2                                 
-from sklearn.preprocessing import LabelEncoder , OneHotEncoder
+from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
