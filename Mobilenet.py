@@ -32,9 +32,7 @@ for item in covid_types:
     covid.append((item, str(r'datapath' + '/' +item) + '/' + covids))
 
 covid_df = pd.DataFrame(data=covid, columns=['covid type', 'image'])
-
 covid_count = covid_df['covid type'].value_counts()
-
 path = r'datapath'
 covid_types =  os.listdir(r'datapath')
 
@@ -59,18 +57,13 @@ images = np.array(images)
 images.shape   
 #%%
 images = images.astype('float32') / 255.0
-
 y=covid_df['covid type'].values
-
 y_labelencoder = LabelEncoder ()
 y = y_labelencoder.fit_transform (y)
-
 images, y = shuffle(images, y, random_state=1)
-
 print(images)
 
 train_x, test_x, train_y, test_y = train_test_split(images, y, test_size=0.1, random_state=415)
-
 #%%
 def _make_divisible(v, divisor, min_value=None):
     if min_value is None:
@@ -85,7 +78,6 @@ def relu6(x):
     """Relu 6
     """
     return K.relu(x, max_value=6.0)
-
 #%%
 def _conv_block(inputs, filters, kernel, strides):
     """Convolution Block
@@ -103,14 +95,12 @@ def _conv_block(inputs, filters, kernel, strides):
         Output tensor.
     """
     channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
-
     x = Conv2D(filters, kernel, padding='same', strides=strides)(inputs)
     x = BatchNormalization(axis=channel_axis)(x)
     return Activation(relu6)(x)
 #%%
 def _bottleneck(inputs, filters, kernel, t, alpha, s, r=False):
     """Bottleneck
-    
     # Arguments
         inputs: Tensor, input tensor of conv layer.
         filters: Integer, the dimensionality of the output space.
@@ -126,27 +116,20 @@ def _bottleneck(inputs, filters, kernel, t, alpha, s, r=False):
     # Returns
         Output tensor.
     """
-
     channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
     # Depth
     tchannel = K.int_shape(inputs)[channel_axis] * t
     # Width
     cchannel = int(filters * alpha)
-
     x = _conv_block(inputs, tchannel, (1, 1), (1, 1))
-
     x = DepthwiseConv2D(kernel, strides=(s, s), depth_multiplier=1, padding='same')(x)
     x = BatchNormalization(axis=channel_axis)(x)
     x = Activation(relu6)(x)
-
     x = Conv2D(cchannel, (1, 1), strides=(1, 1), padding='same')(x)
     x = BatchNormalization(axis=channel_axis)(x)
-
     if r:
         x = Add()([x, inputs])
-
     return x
-
 #%%
 def _inverted_residual_block(inputs, filters, kernel, t, alpha, strides, n):
     """Inverted Residual Block
@@ -166,14 +149,10 @@ def _inverted_residual_block(inputs, filters, kernel, t, alpha, strides, n):
     # Returns
         Output tensor.
     """
-
     x = _bottleneck(inputs, filters, kernel, t, alpha, strides)
-
     for i in range(1, n):
         x = _bottleneck(x, filters, kernel, t, alpha, 1, True)
-
     return x
-
 #%%
 def MobileNetv2(input_shape, k, alpha=1.0):
     """MobileNetv2
@@ -198,7 +177,6 @@ def MobileNetv2(input_shape, k, alpha=1.0):
     x = _inverted_residual_block(x, 96, (3, 3), t=6, alpha=alpha, strides=1, n=3)
     x = _inverted_residual_block(x, 160, (3, 3), t=6, alpha=alpha, strides=2, n=3)
     x = _inverted_residual_block(x, 320, (3, 3), t=6, alpha=alpha, strides=1, n=1)
-
     if alpha > 1.0:
         last_filters = _make_divisible(1280 * alpha, 8)
     else:
@@ -212,9 +190,7 @@ def MobileNetv2(input_shape, k, alpha=1.0):
 
     x = Activation('softmax', name='softmax')(x)
     output = Reshape((k,))(x)
-
     model = Model(inputs, output)
-
     return model
 #%%
 model = MobileNetv2((224, 224, 3), 13, 1.0)
@@ -226,16 +202,13 @@ preds = model.evaluate(test_x, test_y)
 print ("Loss = " + str(preds[0]))
 print ("Test Accuracy = " + str(preds[1]))
 y_pred = model.predict(test_x).argmax(axis=1)
-
 #%%
 target_names = ['B.1.1.7-mix','B.1.351-mix','B.1.429-mix'
                 ,'B.1.525-mix','B.1.526-mix','B.1.617.1-mix','B.1.617.2-mix'
                 ,'C.37-mix','P.1-mix','P.2-black','B.1.640.1-mix','B.1.640.2-mix','B.1.351.1-mix']
 print(classification_report(test_y, y_pred, target_names=target_names))
-
 cm = confusion_matrix(test_y, y_pred)
 print(cm)
-
 #%%
 plt.figure(figsize=(5,4))
 sns.heatmap(cm, annot=True)
